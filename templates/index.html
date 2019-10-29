@@ -1,18 +1,20 @@
 {% extends 'base.html' %}
 
-{#{% block header %}#}
-{#    <h1>{% block title %}Log In{% endblock %}</h1>#}
-{#{% endblock %}#}
+{% block title %}News Entries{% endblock %}
 
+{% block header %}News Entries{% endblock %}
 {% block content %}
-    <div class="col-md-12">
-                <h4>Blog 1</h4>
-                <p>No man has a good enough memory to be a successful liar - Abraham Lincoln</p>
-
-                <h4>Blog 2</h4>
-                <p>A successful man is one who makes more money than his wife can spend. A successful woman is one who can find such a man.</p>
-
-                <h4>Blog 3</h4>
-                <p>I can resist everything except temptation.</p>
+    <div class="row">
+        {% for pst in posts %}
+            <div class="col-md-9">
+                <h4>
+                    <a href="{{ url_for('get_post',id=pst.id) }}">{{ pst.title }}</a>
+                </h4>
             </div>
+            <p>Created on: {{ pst.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+            <hr>
+        {% else %}
+            <h3>No posts available!</h3>
+        {% endfor %}
+    </div>
 {% endblock %}

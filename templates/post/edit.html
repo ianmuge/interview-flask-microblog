@@ -5,30 +5,30 @@
 {% block header %}Add/Edit entry{% endblock %}
 {% block content %}
     <div class="col-md-12">
-        <form action="{{ url_for('edit') }}" class="form-horizontal" method="post">
+        <form action="{{ url_for('update_post' ,id=id) }}" class="form-horizontal" method="post">
             <div class="form-group">
-                <label for="title" class="col-sm-2 control-label">Title</label>
-                <div class="col-sm-10">
+                <label for="title" class="col-md-2 control-label">Title</label>
+                <div class="col-md-10">
                     <input class="form-control" id="title" name="title" type="text" value="{{ request.form.get('title', post.title) }}">
                 </div>
             </div>
             <div class="form-group">
-                <label for="body" class="col-sm-2 control-label">Body</label>
-                <div class="col-sm-10">
+                <label for="body" class="col-md-2 control-label">Body</label>
+                <div class="col-md-10">
                     <textarea class="form-control" id="body" name="body" >{{ request.form.get('body', post.body) }}</textarea>
                 </div>
             </div>
             <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
+                <div class="col-md-offset-2 col-md-10">
                     <div class="checkbox">
                         <label>
-                            <input {% if entry.published %}checked="checked" {% endif %}name="published" type="checkbox" value="y"> Published?
+                            <input {% if post.published %}checked="checked" {% endif %}name="published" type="checkbox" value="1"> Published?
                         </label>
                     </div>
                 </div>
             </div>
             <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
+                <div class="col-md-offset-2 col-md-10">
                     <button class="btn btn-primary" type="submit">Submit</button>
                     <a class="btn btn-default" href="{{ url_for('get_user_posts') }}">Cancel</a>
                 </div>

@@ -65,10 +65,6 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.now)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
-    @classmethod
-    def public(cls):
-        return Post.select().where(Post.published == True)
-
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
 
@@ -84,86 +80,77 @@ def init_db_command():
 app.cli.add_command(init_db_command)
 
 @app.route('/')
-# def index():
-#     posts = Post.public().order_by(Post.timestamp.desc())
-#     return render_template('index.html',posts=posts)
 def index():
-    return render_template('index.html')
+    posts = Post.query.filter_by(published=True).order_by(Post.timestamp.desc())
+    return render_template('index.html',posts=posts)
 @app.route('/about/')
 def about():
     return render_template('about.html')
-# @app.route('/login/', methods=['GET', 'POST'])
-# def login():
-#     next_url = request.args.get('next') or request.form.get('next')
-#     if request.method == 'POST' and request.form.get('password'):
-#         password = request.form.get('password')
-#         if password == app.config['ADMIN_PASSWORD']:
-#             session['logged_in'] = True
-#             session.permanent = True  # Use cookie to store session.
-#             flash('You are now logged in.', 'success')
-#             return redirect(next_url or url_for('index'))
-#         else:
-#             flash('Incorrect password.', 'danger')
-#     return render_template('auth/login.html', next_url=next_url)
-#
-# @app.route('/logout/', methods=['POST'])
-# @login_required
-# def logout():
-#     session.clear()
-#     flash('You are now logged out.', 'success')
-#     return redirect(url_for('login'))
-
 
 @app.route('/post/', methods=['GET'])
 @login_required
 def get_user_posts():
-    # return session["user_id"]
     posts=Post.query.filter_by(author_id = session["user_id"]).all()
     return render_template('post/index.html', posts=posts)
 
 @app.route('/post/<int:id>', methods=['GET'])
 @login_required
 def get_post(id):
+    post=Post.query.filter_by(id = id).first()
+    return render_template('detail.html', id=id,post=post)
+@app.route('/post/<int:id>/edit/', methods=['GET'])
+@login_required
+def edit_post(id):
     if id==0:
         post={}
     else:
         post=Post.query.filter_by(id = id).first()
-    return render_template('post/detail.html', post=post)
+    return render_template('post/edit.html', id=id,post=post)
 
-@app.route('/post/', methods=['POST'])
-def create_post():
-    if request.form.get('title') and request.form.get('body'):
-        post=Post(
-            title=request.form['title'],
-            body=request.form['body'],
-            author_id=1,
-            published=request.form.get('published') or False)
-        db.session.add(post)
-        db.session.commit()
-        flash('Post created successfully.', 'success')
-        return redirect(url_for('get_user_posts'))
-    else:
-        flash('Title and Content are required.', 'danger')
-        db.session.rollback()
-        return redirect(url_for('get_user_posts'))
+# @app.route('/post/', methods=['POST'])
+# def create_post():
+#     if request.form.get('title') and request.form.get('body'):
+#         post=Post(
+#             title=request.form['title'],
+#             body=request.form['body'],
+#             author_id=1,
+#             published=request.form.get('published') or False)
+#         db.session.add(post)
+#         db.session.commit()
+#         flash('Post created successfully.', 'success')
+#         return redirect(url_for('get_user_posts'))
+#     else:
+#         flash('Title and Content are required.', 'danger')
+#         db.session.rollback()
+#         return redirect(url_for('get_user_posts'))
 
-@app.route('/post/<int:id>', methods=['PUT'])
+@app.route('/post/<int:id>/update/', methods=['POST'])
 def update_post(id):
     if request.form.get('title') and request.form.get('body'):
-        post=Post.query.filter_by(id = id).first()
-        post.title=request.form['title'],
-        post.body=request.form['body'],
-        post.author_id=1,
-        post.published=request.form.get('published') or False
-        db.session.flush()
-        db.session.commit()
-        flash('Post updated successfully.', 'success')
+        if id!=0:
+            post=Post.query.filter_by(id = id).first()
+
+            post.title=request.form['title']
+            post.body=request.form['body']
+            post.author_id=session["user_id"]
+            post.published=request.form.get('published')=="1" or False
+            db.session.flush()
+            db.session.commit()
+        else:
+            post = Post(
+                title=request.form['title'],
+                body=request.form['body'],
+                author_id=session["user_id"],
+                published=request.form.get('published')=="1" or False)
+            db.session.add(post)
+            db.session.commit()
+        flash('Post added/updated successfully.', 'success')
         return redirect(url_for('get_user_posts'))
     else:
-        flash('Title and Content are required.', 'danger')
+        flash('Required fields not supplied', 'danger')
         db.session.rollback()
         return redirect(url_for('get_user_posts'))
-@app.route('/post/<int:id>', methods=['DELETE'])
+@app.route('/post/<int:id>/delete/', methods=['GET'])
 def delete_post(id):
     try:
         post = db.session.query(Post).get(id)
@@ -176,7 +163,7 @@ def delete_post(id):
         db.session.rollback()
         return redirect(url_for('get_user_posts'))
 
-@app.route('/like_post/<int:id>', methods=['GET'])
+@app.route('/post/<int:id>/like/', methods=['GET'])
 def like_post(id):
     try:
         return redirect(url_for('get_user_posts'))

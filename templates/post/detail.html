@@ -1,10 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block title %}{{ current_user.username }}| Entries{% endblock %}
+
+{% block header %}{{ current_user.username }}| Entries{% endblock %}
+{% block content %}
+    <a class="btn btn-flat btn-success" href="/post/0">Add new Post</a>
+    <div>
+
+    </div>
+{% endblock %}
