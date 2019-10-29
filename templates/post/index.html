@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ current_user.username }}| Entries{% endblock %}
+
+{% block header %}{{ current_user.username }}| Entries{% endblock %}
+{% block content %}
+    <button class="btn btn-flat btn-success" href="/post/0">Add new Post</button>
+    <div>
+
+    </div>
+{% endblock %}

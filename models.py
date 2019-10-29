@@ -27,7 +27,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(255))
     roles = db.relationship('Role', secondary=roles_users,backref=db.backref('users', lazy='joined'))
-    roles = db.relationship('Post', secondary=posts_users,backref=db.backref('users', lazy='joined'))
+    likes = db.relationship('Post', secondary=posts_users,backref=db.backref('users', lazy='joined'))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     def __str__(self):
         return self.email
@@ -44,5 +44,10 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title=db.Column(db.String(255))
     body = db.Column(db.Text)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    published= db.Column(db.Boolean)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.now)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    @classmethod
+    def public(cls):
+        return Post.select().where(Post.published == True)
