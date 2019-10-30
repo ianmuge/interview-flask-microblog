@@ -5,13 +5,13 @@ from app import db,app
 from models import *
 @app.route('/')
 def index():
-    sort_by=request.args.get("sort_by", type=int)
+    sort_by=request.args.get("sort_by")
     posts = Post.query.filter_by(published=True)
-    if sort_by==1:
+    if sort_by=='created_asc':
         posts=posts.order_by(Post.timestamp.asc())
-    elif sort_by==2:
+    elif sort_by=='created_desc':
         posts=posts.order_by(Post.timestamp.desc())
-    elif sort_by==3:
+    elif sort_by=='popularity':
         posts = posts.order_by(Post.popularity.desc())
     else:
         posts=posts.order_by(Post.timestamp.desc())
@@ -23,11 +23,17 @@ def index():
 def about():
     return render_template('about.html')
 
+@app.route('/dummy/')
+def dummy():
+    return render_template('dummy.html')
+
 @app.route('/dashboard/')
 @roles_accepted("admin")
 @login_required
 def dashboard():
-    return render_template('post/dashboard.html',users=User,posts=Post)
+    from sqlalchemy import text
+
+    return render_template('post/dashboard.html',users=User,posts=Post.query.order_by(text('timestamp DESC')))
 
 @app.route('/post/', methods=['GET'])
 @roles_accepted("publisher","admin")

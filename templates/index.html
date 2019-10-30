@@ -8,9 +8,9 @@
     <div class="input-group mb-3">
         <select class="form-control" name="sort_name" id="sort_name">
             <option value="">Filter By</option>
-            <option value="1">Created Time(Asc)</option>
-            <option value="2">Created Time(Desc)</option>
-            <option value="3">Popularity</option>
+            <option value="created_asc">Created Time(Asc)</option>
+            <option value="created_desc">Created Time(Desc)</option>
+            <option value="popularity">Popularity</option>
         </select>
     </div>
     <div class="row">
@@ -19,7 +19,7 @@
                 <tr class="d-flex">
                     <td class="col-sm-12">
                         <h4><a href="{{ url_for('get_post',id=post.id) }}" title="Preview Post">{{ post.title }}</a></h4>
-                        <i>{{ post.body[:30]+"..." }}</i><br>
+                        <i class="text-container">{{ post.body}}</i><br>
                         <small>Created on: {{ post.timestamp.strftime('%d/%m/%Y %H:%M:%S') }} by {{ post.author.username }}</small>
                         <br>
                         <i>
@@ -55,6 +55,9 @@
             </div>
         </div>
     </div>
+
+{% endblock %}
+{% block script %}
     <script>
         $(document).ready(function(){
             $(".like_form").submit(function(e){

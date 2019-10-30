@@ -26,7 +26,7 @@
                         <div class="card-body-icon">
                             <i class="fa fa-fw fa-list"></i>
                         </div>
-                        <div class="">{{ posts.query.count() }} Posts!</div>
+                        <div class="">{{ posts.count() }} Posts!</div>
                     </div>
                 </div>
             </div>
@@ -36,7 +36,7 @@
                         <div class="card-body-icon">
                             <i class="fa fa-fw fa-comments"></i>
                         </div>
-                        <div class="">{{ posts.query.filter_by(published=False).count() }} Unpublished Posts!</div>
+                        <div class="">{{ posts.filter_by(published=False).count() }} Unpublished Posts!</div>
                     </div>
                 </div>
             </div>
@@ -46,7 +46,7 @@
                         <div class="card-body-icon">
                             <i class="fa fa-fw fa-comments"></i>
                         </div>
-                        <div class="">{{ posts.query.filter_by(published=True).count() }} Published Posts!</div>
+                        <div class="">{{ posts.filter_by(published=True).count() }} Published Posts!</div>
                     </div>
 
                 </div>
@@ -70,13 +70,12 @@
                         <i class="fa fa-bell-o"></i>Latest Posts</div>
                     <div class="list-group list-group-flush small">
                         <div id="message-box">
-                            {% for post in posts.query.filter_by(published=True).limit(4).all() %}
+                            {% for post in posts.filter_by(published=True).limit(4).all() %}
                             <a class="list-group-item list-group-item-action" href="{{ url_for('get_post',id=post.id) }}">
                                 <div class="media">
-{#                                    <img class="d-flex mr-3 rounded-circle" src="http://placehold.it/45x45" alt="">#}
                                     <div class="media-body">
                                         <p><strong>{{ post.title }} </strong></p>
-                                        <small>{{ post.body[:30] }}... </small>
+                                        <small class="text-container">{{ post.body }} </small>
                                         <div class="text-muted smaller">By: {{ post.author.username }} On: {{ post.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</div>
                                     </div>
                                 </div>
@@ -85,7 +84,7 @@
                         </div>
                         <a class="list-group-item list-group-item-action" href="/">View all activity...</a>
                     </div>
-                    <div class="card-footer small text-muted">Last published: {{ posts.query.filter_by(published=True).first().timestamp.strftime('%d/%m/%Y %H:%M:%S')}}</div>
+                    <div class="card-footer small text-muted">Last published: {{ posts.filter_by(published=True).first().timestamp.strftime('%d/%m/%Y %H:%M:%S')}}</div>
                 </div>
             </div>
         </div>
@@ -112,7 +111,6 @@
                             <td>{{ user.email }}</td>
                             <td>{{ user.roles[0] }}</td>
                             <td>{{ user.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
-
                         </tr>
                     {% endfor %}
                         </tbody>

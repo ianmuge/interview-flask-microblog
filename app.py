@@ -4,10 +4,12 @@ from flask_migrate import Migrate
 from flask_security import login_required, roles_accepted,RoleMixin, UserMixin,Security, SQLAlchemyUserDatastore,current_user
 from flask.cli import with_appcontext
 from click import command, echo
-
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 from flask_marshmallow import Marshmallow
 import cfg
 import os
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] =cfg.mysql_db_resource
@@ -15,6 +17,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] =False
 app.config['SECRET_KEY'] = cfg.secret_key
 app.config['SECURITY_PASSWORD_SALT'] = cfg.security_salt
 app.config['SECURITY_TRACKABLE'] = True
+
+# app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
+
+# admin = Admin(app, name='News', template_mode='bootstrap3')
 
 
 db = SQLAlchemy(app)
@@ -25,6 +31,13 @@ from models import *
 from routes import *
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
+
+
+# class UserView(ModelView):
+#     column_exclude_list = ['password', ]
+
+# admin.add_view(UserView(User, db.session))
+# admin.add_view(ModelView(Post, db.session))
 
 from db import seed
 

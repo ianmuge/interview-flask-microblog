@@ -13,7 +13,7 @@
                 <tr class="d-flex">
                     <td class="col-sm-7">
                         <h4><a href="{{ url_for('get_post',id=post.id) }}" title="Preview Post">{{ post.title }}</a></h4>
-                        <i>{{ post.body[:30]+"..." }}</i><br>
+                        <i class="text-container">{{ post.body }}</i><br>
                         <small>Created on: {{ post.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</small>
                         # <span>{{ post.likes.count()}}</span> likes
                         # <span>{{ post.comments.count()}}</span> comments

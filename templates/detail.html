@@ -11,10 +11,22 @@
     <small>Created on: {{ post.timestamp.strftime('%d/%m/%Y %H:%M:%S') }} by {{ post.author.username }}</small>
     <hr>
     {% if current_user.is_authenticated and current_user.id==post.author.id %}
-    <a href="{{ url_for('edit_post',id=post.id) }}" class="btn btn-flat btn-info">Edit</a>
-                        <a href="{{ url_for('delete_post',id=post.id) }}" class="btn btn-flat btn-danger">Delete</a>
+        <a href="{{ url_for('edit_post',id=post.id) }}" class="btn btn-flat btn-info">Edit</a>
+        <a href="{{ url_for('delete_post',id=post.id) }}" class="btn btn-flat btn-danger">Delete</a>
     {% endif %}
     {% if current_user.is_authenticated %}
+        <form class="like_form form-inline" method="post">
+            <input type="hidden" value="{{ post.id }}" name="id">
+            <button class="btn btn-flat btn-link" type="submit" id="like_{{ post.id }}">
+                {% if current_user.has_liked_post(post) %}
+                    Unlike
+                {% else %}
+                    Like
+                {% endif %}
+            </button>
+            # <span id="like_count_{{ post.id }}">{{ post.likes.count()}}</span> likes
+            # <span>{{ post.comments.count()}}</span> comments
+        </form>
         <button class="btn btn-flat btn-info" type="button" data-toggle="modal" data-target="#new-comment-modal">Comment</button>
     {% else %}
         Login to comment and like
@@ -123,11 +135,11 @@
                 success: function (result) {
                     console.log(result);
                     if (result.code === 1) {
-                            cust_alert('success', "Record deleted!");
-                            location.reload()
-                        } else {
-                            cust_alert('danger', "Could not delete: " + result.msg);
-                        }
+                        cust_alert('success', "Record deleted!");
+                        location.reload()
+                    } else {
+                        cust_alert('danger', "Could not delete: " + result.msg);
+                    }
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
                     cust_alert('danger', "Error Thrown: " + thrownError);
@@ -135,6 +147,23 @@
             });
         }
         $(document).ready(function () {
+            $(".like_form").submit(function(e){
+                e.preventDefault();
+                var data = $(this).serializeArray().reduce(function(obj, item) {
+                    obj[item.name] = item.value;
+                    return obj;
+                }, {});
+                console.log(data);
+                $.ajax({
+                    type: "POST",
+                    url: '/post/'+data.id+'/like/',
+                    data:$(this).serialize(),
+                    success: function (result) {
+                        $("#like_count_"+data.id).text(result['count']);
+                        $("#like_"+data.id).text(result['next']);
+                    }
+                });
+            });
 
             $("#new-comment-form").submit(function (e) {
                 e.preventDefault();

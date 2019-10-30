@@ -1,10 +1,12 @@
 # Technical Assessment Submission
 ## Dependecies
-The solution is built using flask on Python 3.7.3
+The solution is built using flask on Python 3.7.3. \
+The code ships with sample records stored in an SQlite database marked as ``news.db`` located in the project root. It also ships with a ``test.db`` used for running unit tests.
+
 Other pertinent dependencies are listed in the requirements file
 ## Run instructions
 - Go to project root
-- Install dependencies 
+- Install dependencies. *_This can be done in a virtual environment as opposed to the global environment_
     ```
     pip install -r requirements.txt
     ```
@@ -30,7 +32,8 @@ Other pertinent dependencies are listed in the requirements file
 ## To reinitialze the sqlite3 database
 - Run the ``flask init-db`` command in the project root directory 
 - This will generate 3 default users with 3 distinct roles, and 40 random posts.
-## Default credentials
+### Default credentials
+The default users generated are:
 - user:
     ```
     email: user@example.com
