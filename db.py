@@ -41,3 +41,11 @@ def seed():
         )
         db.session.add(post)
     db.session.commit()
+def reset():
+    db.session.flush()
+    if os.path.exists(cfg.db_file):
+        os.remove(cfg.db_file)
+        print("Database Removed")
+    db.create_all()
+    seed()
+    echo("Initialized the database.")

@@ -1,0 +1,12 @@
+{
+  "test_auth.py::BasicTests::test_authenticate": true,
+  "test_auth.py::BasicTests::test_login_page": true,
+  "test_auth.py::test_authenticate": true,
+  "test_auth.py::test_login_view": true,
+  "test_auth_1.py::BasicTests::test_authenticate": true,
+  "test_base.py::BasicTests::test_login_view": true,
+  "tests/test_auth.py::test_authenticate": true,
+  "tests/test_auth.py::test_login_view": true,
+  "tests/test_base.py": true,
+  "tests/test_blog.py": true
+}
