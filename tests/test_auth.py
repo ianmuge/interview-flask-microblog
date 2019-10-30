@@ -36,13 +36,20 @@ class AuthTests(unittest.TestCase):
             '/logout',
             follow_redirects=True
         )
+    def login_as(self,role):
+        if role=="admin":
+            return self.login(email="admin@example.com",password="admin@2019")
+        elif role=="publisher":
+            return self.login(email="publisher@example.com",password="publisher@2019")
+        else:
+            return self.login(email="user@example.com", password="user@2019")
 
     def test_login_page(self):
         response = self.app.get('/login', follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         assert b'Login' in response.data
     def test_authenticate(self):
-        response = self.login(email="publisher@example.com",password="publisher@2019")
+        response = self.login_as("publisher")
         assert b'publisher' in response.data
     def test_invalid_user(self):
         response = self.login(email="bogus@bogus.com",password="bogus@2019")
@@ -53,9 +60,18 @@ class AuthTests(unittest.TestCase):
         assert b'Invalid password' in response.data
 
     def test_logout(self):
-        self.login(email="publisher@example.com",password="publisher@2019")
+        self.login_as("publisher")
         response = self.logout()
         assert b'News Posts' in response.data
+
+    def test_authorized_access(self):
+        self.login_as("admin")
+        response =self.app.get("/dashboard")
+        assert b'dashboard' in response.data
+    def test_unauthorized_access(self):
+        self.login_as("publisher")
+        response =self.app.get("/dashboard",follow_redirects=True)
+        assert b"You do not have permission to view this resource." in response.data
 
 if __name__ == "__main__":
     unittest.main()

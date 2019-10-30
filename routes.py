@@ -42,7 +42,7 @@ def get_user_posts():
 @roles_accepted("publisher","user","admin")
 @login_required
 def get_post(id):
-    post=Post.query.filter_by(id = id).first()
+    post=Post.query.filter_by(id = id).first_or_404()
     return render_template('detail.html', id=id,post=post)
 
 @app.route('/post/<int:id>/edit/', methods=['GET'])
@@ -52,7 +52,7 @@ def edit_post(id):
     if id==0:
         post={}
     else:
-        post=Post.query.filter_by(id = id).first()
+        post=Post.query.filter_by(id = id).first_or_404()
     return render_template('post/edit.html', id=id,post=post)
 
 @app.route('/post/<int:id>/update/', methods=['POST'])
@@ -87,7 +87,7 @@ def update_post(id):
 @login_required
 def delete_post(id):
     try:
-        post = db.session.query(Post).get(id)
+        post = Post.query.filter_by(id = id).first_or_404()
         db.session.delete(post)
         db.session.commit()
         flash('Post Deleted successfully.', 'success')

@@ -13,7 +13,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] =cfg.mysql_db_resource
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] =False
 app.config['SECRET_KEY'] = cfg.secret_key
-app.config['SECURITY_PASSWORD_SALT'] = cfg.security["SALT"]
+app.config['SECURITY_PASSWORD_SALT'] = cfg.security_salt
 app.config['SECURITY_TRACKABLE'] = True
 
 
