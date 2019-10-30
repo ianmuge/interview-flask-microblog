@@ -1,10 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block title %}Dashboard{% endblock %}
+{% block head %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
+{% endblock %}
+
+{% block header %}Dashboard{% endblock %}
+{% block content %}
+    <div class="content-wrapper">
+    <div class="container-fluid">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="#">Dashboard</a>
+            </li>
+            <li class="breadcrumb-item active">My Dashboard</li>
+        </ol>
+        <div class="row">
+            <div class="col-xl-3 col-sm-6 mb-3">
+                <div class="card text-white bg-primary o-hidden h-100">
+                    <div class="card-body">
+                        <div class="card-body-icon">
+                            <i class="fa fa-fw fa-list"></i>
+                        </div>
+                        <div class="">{{ posts.query.count() }} Posts!</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 mb-3">
+                <div class="card text-white bg-warning o-hidden h-100">
+                    <div class="card-body">
+                        <div class="card-body-icon">
+                            <i class="fa fa-fw fa-comments"></i>
+                        </div>
+                        <div class="">{{ posts.query.filter_by(published=False).count() }} Unpublished Posts!</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 mb-3">
+                <div class="card text-white bg-success o-hidden h-100">
+                    <div class="card-body">
+                        <div class="card-body-icon">
+                            <i class="fa fa-fw fa-comments"></i>
+                        </div>
+                        <div class="">{{ posts.query.filter_by(published=True).count() }} Published Posts!</div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="col-xl-3 col-sm-6 mb-3">
+                <div class="card text-white bg-danger o-hidden h-100">
+                    <div class="card-body">
+                        <div class="card-body-icon">
+                            <i class="fa fa-fw fa-users"></i>
+                        </div>
+                        <div class="">{{ users.query.count() }} Users!</div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="fa fa-bell-o"></i>Latest Posts</div>
+                    <div class="list-group list-group-flush small">
+                        <div id="message-box">
+                            {% for post in posts.query.filter_by(published=True).limit(4).all() %}
+                            <a class="list-group-item list-group-item-action" href="{{ url_for('get_post',id=post.id) }}">
+                                <div class="media">
+{#                                    <img class="d-flex mr-3 rounded-circle" src="http://placehold.it/45x45" alt="">#}
+                                    <div class="media-body">
+                                        <p><strong>{{ post.title }} </strong></p>
+                                        <small>{{ post.body[:30] }}... </small>
+                                        <div class="text-muted smaller">By: {{ post.author.username }} On: {{ post.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</div>
+                                    </div>
+                                </div>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        <a class="list-group-item list-group-item-action" href="/">View all activity...</a>
+                    </div>
+                    <div class="card-footer small text-muted">Last published: {{ posts.query.filter_by(published=True).first().timestamp.strftime('%d/%m/%Y %H:%M:%S')}}</div>
+                </div>
+            </div>
+        </div>
+        <!-- Example DataTables Card-->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="fa fa-table"></i>Latest 5 Users to sign up</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th>Signup date</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tbody id="user-table">
+                    {% for user in users.query.limit(5).all() %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.roles[0] }}</td>
+                            <td>{{ user.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+
+                        </tr>
+                    {% endfor %}
+                        </tbody>
+                        </tbody>
+                        <tfoot>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th>Signup date</th>
+                        </tr>
+                        </tfoot>
+
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer small text-muted">Latest user signed up: {{ users.query.first().timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</div>
+        </div>
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+
+
+    </script>
+{% endblock %}

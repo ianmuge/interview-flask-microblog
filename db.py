@@ -1,9 +1,7 @@
 from app import *
 import random
-import string
-def randomString(stringLength=10):
-    letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(stringLength))
+from faker import Faker
+fake = Faker()
 def seed():
     roles=["user","publisher","admin"]
     for r in roles:
@@ -35,9 +33,11 @@ def seed():
         user_datastore.create_user(username=u["username"],email=u['email'], password=u['password'],active=u["active"], roles=u['roles'])
     for p in range(40):
         post = Post(
-            title=randomString(10),
-            body=randomString(1000),
+            title=fake.text(max_nb_chars=20),
+            body= "".join(fake.paragraphs(5)),
             author_id=2,
-            published=random.choice([True,False]))
+            published=random.choice([True,False]),
+            timestamp=fake.date_time_this_year()
+        )
         db.session.add(post)
     db.session.commit()

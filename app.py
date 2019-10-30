@@ -7,7 +7,6 @@ from click import command, echo
 from flask_paginate import Pagination, get_page_parameter
 from flask_marshmallow import Marshmallow
 import cfg
-
 import os
 
 app = Flask(__name__)
@@ -65,10 +64,10 @@ def about():
 @roles_accepted("admin")
 @login_required
 def dashboard():
-    return render_template('post/dashboard.html')
+    return render_template('post/dashboard.html',users=User,posts=Post)
 
 @app.route('/post/', methods=['GET'])
-@roles_accepted("publisher")
+@roles_accepted("publisher","admin")
 @login_required
 def get_user_posts():
     posts=Post.query.filter_by(author_id = session["user_id"])
@@ -77,13 +76,13 @@ def get_user_posts():
     return render_template('post/index.html', posts=posts.all(),pagination=pagination)
 
 @app.route('/post/<int:id>', methods=['GET'])
-@roles_accepted("publisher","user")
+@roles_accepted("publisher","user","admin")
 @login_required
 def get_post(id):
     post=Post.query.filter_by(id = id).first()
     return render_template('detail.html', id=id,post=post)
 @app.route('/post/<int:id>/edit/', methods=['GET'])
-@roles_accepted("publisher")
+@roles_accepted("publisher","admin")
 @login_required
 def edit_post(id):
     if id==0:
@@ -93,7 +92,7 @@ def edit_post(id):
     return render_template('post/edit.html', id=id,post=post)
 
 @app.route('/post/<int:id>/update/', methods=['POST'])
-@roles_accepted("publisher")
+@roles_accepted("publisher","admin")
 @login_required
 def update_post(id):
     if request.form.get('title') and request.form.get('body'):
@@ -120,7 +119,7 @@ def update_post(id):
         db.session.rollback()
         return redirect(url_for('get_user_posts'))
 @app.route('/post/<int:id>/delete/', methods=['GET'])
-@roles_accepted("publisher")
+@roles_accepted("publisher","admin")
 @login_required
 def delete_post(id):
     try:
@@ -134,7 +133,7 @@ def delete_post(id):
         db.session.rollback()
         return redirect(url_for('get_user_posts'))
 @app.route('/post/<int:id>/like/', methods=['POST'])
-@roles_accepted("user","publisher")
+@roles_accepted("user","publisher","admin")
 @login_required
 def like_post(id):
     try:
@@ -161,7 +160,7 @@ def like_post(id):
     finally:
         return data
 @app.route('/post/comment/<int:comment_id>', methods=['GET'])
-@roles_accepted("user","publisher")
+@roles_accepted("user","publisher","admin")
 @login_required
 def get_comment(comment_id):
     res={}
@@ -178,7 +177,7 @@ def get_comment(comment_id):
     finally:
         return res
 @app.route('/post/comment/create/', methods=['POST'])
-@roles_accepted("user","publisher")
+@roles_accepted("user","publisher","admin")
 @login_required
 def create_comment_post():
     post_id=request.form['post_id']
@@ -207,7 +206,7 @@ def create_comment_post():
     finally:
         return res
 @app.route('/post/comment/<int:comment_id>/update/', methods=['PUT'])
-@roles_accepted("user","publisher")
+@roles_accepted("user","publisher","admin")
 @login_required
 def update_comment_post(comment_id):
     try:
@@ -232,7 +231,7 @@ def update_comment_post(comment_id):
         return res
 
 @app.route('/post/comment/<int:comment_id>/delete/', methods=['DELETE'])
-@roles_accepted("user","publisher")
+@roles_accepted("user","publisher","admin")
 @login_required
 def delete_comment_post(comment_id):
     try:

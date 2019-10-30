@@ -29,6 +29,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(50), unique=True)
     password = db.Column(db.String(255))
     active = db.Column(db.Boolean())
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.now)
     roles = db.relationship('Role', secondary='roles_users',backref=db.backref('users', lazy='joined'))
     liked = db.relationship('PostLike', foreign_keys='PostLike.user_id', backref='user', lazy='dynamic')
     commented = db.relationship('PostComment', foreign_keys='PostComment.user_id', backref='user', lazy='dynamic')
