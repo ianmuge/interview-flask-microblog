@@ -23,9 +23,10 @@
                         <small>Created on: {{ post.timestamp.strftime('%d/%m/%Y %H:%M:%S') }} by {{ post.author.username }}</small>
                         <br>
                         <i>
+                        {% if current_user.is_authenticated %}
                             <form class="like_form" method="post">
                                 <input type="hidden" value="{{ post.id }}" name="id">
-                                <button class="btn btn-flat" type="submit" id="like_{{ post.id }}">
+                                <button class="btn btn-flat btn-link" type="submit" id="like_{{ post.id }}">
                                     {% if current_user.has_liked_post(post) %}
                                         Unlike
                                     {% else %}
@@ -33,7 +34,12 @@
                                     {% endif %}
                                 </button>
                                 # <span id="like_count_{{ post.id }}">{{ post.likes.count()}}</span> likes
+                                # <span>{{ post.comments.count()}}</span> comments
+
                             </form>
+                        {% else %}
+                            Login to comment and like!
+                        {% endif %}
                         </i>
                     </td>
                 </tr>

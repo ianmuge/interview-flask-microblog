@@ -4,8 +4,8 @@ from flask_migrate import Migrate
 from flask_security import login_required, roles_accepted,RoleMixin, UserMixin,Security, SQLAlchemyUserDatastore,current_user
 from flask.cli import with_appcontext
 from click import command, echo
-from datetime import datetime
 from flask_paginate import Pagination, get_page_parameter
+from flask_marshmallow import Marshmallow
 import cfg
 
 import os
@@ -19,76 +19,9 @@ app.config['SECURITY_PASSWORD_SALT'] = cfg.security["SALT"]
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+ma = Marshmallow(app)
 
-class RolesUsers(db.Model):
-    __tablename__ = 'roles_users'
-    id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column('user_id', db.Integer(), db.ForeignKey('user.id'))
-    role_id = db.Column('role_id', db.Integer(), db.ForeignKey('role.id'))
-
-class PostsUsers(db.Model):
-    __tablename__ = 'posts_users'
-    id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column('user_id', db.Integer(), db.ForeignKey('user.id'))
-    post_id = db.Column('post_id', db.Integer(), db.ForeignKey('post.id'))
-
-class Role(db.Model, RoleMixin):
-    __tablename__ = 'role'
-    id = db.Column(db.Integer(), primary_key=True)
-    name = db.Column(db.String(50), unique=True)
-    def __str__(self):
-        return self.name
-
-class User(db.Model, UserMixin):
-    __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(50), unique=True)
-    password = db.Column(db.String(255))
-    active = db.Column(db.Boolean())
-    roles = db.relationship('Role', secondary='roles_users',backref=db.backref('users', lazy='joined'))
-    liked = db.relationship('PostLike', foreign_keys='PostLike.user_id', backref='user', lazy='dynamic')
-    posts = db.relationship('Post', backref='author', lazy='dynamic')
-
-    def __str__(self):
-        return self.email
-    def __repr__(self):
-        return '<User {}>'.format(self.username)
-
-    def like_post(self, post):
-        if not self.has_liked_post(post):
-            like = PostLike(user_id=self.id, post_id=post.id)
-            db.session.add(like)
-
-    def unlike_post(self, post):
-        if self.has_liked_post(post):
-            PostLike.query.filter_by(user_id=self.id,post_id=post.id).delete()
-
-    def has_liked_post(self, post):
-        return PostLike.query.filter(PostLike.user_id == self.id,PostLike.post_id == post.id).count() > 0
-
-    def get_security_payload(self):
-        return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email
-        }
-class PostLike(db.Model):
-    __tablename__ = 'post_like'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
-
-class Post(db.Model):
-    __tablename__ = 'post'
-    id = db.Column(db.Integer, primary_key=True)
-    title=db.Column(db.String(255))
-    body = db.Column(db.Text)
-    published= db.Column(db.Boolean)
-    popularity = db.Column(db.Integer,default=0)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.now)
-    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    likes = db.relationship('PostLike', backref='post', lazy='dynamic')
+from models import *
 
 user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 security = Security(app, user_datastore)
@@ -111,7 +44,7 @@ app.cli.add_command(init_db_command)
 from sqlalchemy import func
 @app.route('/')
 def index():
-    sort_by=request.args.get("sort_by", type=int, default=1)
+    sort_by=request.args.get("sort_by", type=int)
     posts = Post.query.filter_by(published=True)
     if sort_by==1:
         posts=posts.order_by(Post.timestamp.asc())
@@ -144,7 +77,7 @@ def get_user_posts():
     return render_template('post/index.html', posts=posts.all(),pagination=pagination)
 
 @app.route('/post/<int:id>', methods=['GET'])
-@roles_accepted("publisher")
+@roles_accepted("publisher","user")
 @login_required
 def get_post(id):
     post=Post.query.filter_by(id = id).first()
@@ -224,7 +157,102 @@ def like_post(id):
         }
         return data
     except Exception as exc:
-        flash('Exception: {0}'.format(exc), 'danger')
-        return redirect(url_for('get_user_posts'))
+        app.logger.exception(exc)
+    finally:
+        return data
+@app.route('/post/comment/<int:comment_id>', methods=['GET'])
+@roles_accepted("user","publisher")
+@login_required
+def get_comment(comment_id):
+    res={}
+    try:
+        comment = PostComment.query.get(comment_id)
+        res = PostCommentSchema().jsonify(comment)
+    except Exception as exc:
+        app.logger.exception(exc)
+        res = {
+            "data": "",
+            "code": 0,
+            "msg": "Exception Raised: {0}".format(exc)
+        }
+    finally:
+        return res
+@app.route('/post/comment/create/', methods=['POST'])
+@roles_accepted("user","publisher")
+@login_required
+def create_comment_post():
+    post_id=request.form['post_id']
+    try:
+        comment = PostComment(
+            user_id=current_user.id,
+            post_id = post_id,
+            comment = request.form['comment']
+        )
+        db.session.add(comment)
+        db.session.commit()
+
+        flash('Comment added successfully.', 'success')
+        res = {
+            "data": "",
+            "code": 1,
+            "msg": "Added Successfully"
+        }
+    except Exception as exc:
+        app.logger.exception(exc)
+        res = {
+            "data": "",
+            "code": 0,
+            "msg": "Exception Raised: {0}".format(exc)
+        }
+    finally:
+        return res
+@app.route('/post/comment/<int:comment_id>/update/', methods=['PUT'])
+@roles_accepted("user","publisher")
+@login_required
+def update_comment_post(comment_id):
+    try:
+        comment = PostComment.query.get(comment_id)
+        comment.comment = request.form['edit_comment']
+        db.session.flush()
+        db.session.commit()
+        flash('Comment updated successfully.', 'success')
+        res = {
+            "data": "",
+            "code": 1,
+            "msg": "Updated Successfully"
+        }
+    except Exception as exc:
+        app.logger.exception(exc)
+        res = {
+            "data": "",
+            "code": 0,
+            "msg": "Exception Raised: {0}".format(exc)
+        }
+    finally:
+        return res
+
+@app.route('/post/comment/<int:comment_id>/delete/', methods=['DELETE'])
+@roles_accepted("user","publisher")
+@login_required
+def delete_comment_post(comment_id):
+    try:
+        comment = db.session.query(PostComment).get(comment_id)
+        db.session.delete(comment)
+        db.session.commit()
+        res = {
+            "data": "",
+            "code": 1,
+            "msg": "Comment Deleted Successfully"
+        }
+        flash('Comment deleted.', 'success')
+    except Exception as exc:
+        app.logger.exception(exc)
+        res = {
+            "data": "",
+            "code": 0,
+            "msg": "Exception Raised: {0}".format(exc)
+        }
+    finally:
+        return res
 if __name__ == '__main__':
     app.run()

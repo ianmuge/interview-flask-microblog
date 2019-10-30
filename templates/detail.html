@@ -9,4 +9,186 @@
     </div>
     <br>
     <small>Created on: {{ post.timestamp.strftime('%d/%m/%Y %H:%M:%S') }} by {{ post.author.username }}</small>
+    <hr>
+    {% if current_user.is_authenticated and current_user.id==post.author.id %}
+    <a href="{{ url_for('edit_post',id=post.id) }}" class="btn btn-flat btn-info">Edit</a>
+                        <a href="{{ url_for('delete_post',id=post.id) }}" class="btn btn-flat btn-danger">Delete</a>
+    {% endif %}
+    {% if current_user.is_authenticated %}
+        <button class="btn btn-flat btn-info" type="button" data-toggle="modal" data-target="#new-comment-modal">Comment</button>
+    {% else %}
+        Login to comment and like
+    {% endif %}
+    <hr>
+    <div class="container">
+        {% for cmt in post.comments %}
+            <div class="row">
+                <div class="text-wrap text-break">
+                    {{ cmt.comment }}
+                    <p class="small">Created on: {{ cmt.timestamp.strftime('%d/%m/%Y %H:%M:%S') }} by {{ cmt.user.username }}</p>
+                    {% if current_user.is_authenticated and current_user.id==cmt.user.id %}
+                        <button class="btn btn-flat btn-info" onclick="open_comment_edit({{ cmt.id }})">Edit</button>|
+                        <button class="btn btn-flat btn-danger" onclick="delete_comment({{ cmt.id }})">Delete</button>
+                    {% endif %}
+                </div>
+                <hr>
+            </div>
+        {% else %}
+            No comments available
+        {% endfor %}
+    </div>
+
+    <div class="modal" id="new-comment-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Add new comment</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form class="form" id="new-comment-form" method="post" action="#">
+                        <input type="hidden" class="form-control" name="post_id" id="post_id"  value="{{ post.id }}" required readonly/>
+                        <div class="form-group">
+                            <label for="address">Comment</label>
+                            <textarea class="form-control" name="comment" id="comment" placeholder="Comment" ></textarea>
+                        </div>
+                        <button class="btn btn-success" type="submit">Submit</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="edit-comment-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Edit comment</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form class="form" id="edit-comment-form" method="post" action="#">
+                        <input type="hidden" class="form-control" name="edit_comment_id" id="edit_comment_id" required/>
+                        <input type="hidden" class="form-control" name="post_id" id="post_id"  value="{{ post.id }}" required/>
+                        <div class="form-group">
+                            <label for="address">Comment</label>
+                            <textarea class="form-control" name="edit_comment" id="edit_comment" placeholder="Comment"></textarea>
+                        </div>
+                        <button class="btn btn-success" type="submit">Submit</button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block script %}
+    <script>
+        function cust_alert(state,message){
+            html='<div id="alert" class="alert alert-'+state+' alert-dismissible fade show">' +
+                '<button type="button" class="close" data-dismiss="alert">&times;</button>' +
+                '<strong>'+state+'</strong><i> '+message+'</i>' +
+                '</div>'
+            return $(".navbar").after(html);
+        }
+        function open_comment_edit(id){
+            console.log(id);
+            $.ajax({
+                type: "GET",
+                url: '/post/comment/'+id,
+                success: function (result) {
+                    console.log(result);
+                    if ('id' in result) {
+                        $("#edit_comment_id").val(result.id);
+                        $("#edit_comment").val(result.comment);
+                        $("#edit-comment-modal").modal("show");
+                    } else {
+                        cust_alert('danger', "Could not load: " + result.msg);
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    cust_alert('danger', "Error Thrown: " + thrownError);
+                }
+            });
+        }
+        function delete_comment(id){
+            console.log(id);
+            $.ajax({
+                type: "DELETE",
+                url: '/post/comment/'+id+"/delete/",
+                success: function (result) {
+                    console.log(result);
+                    if (result.code === 1) {
+                            cust_alert('success', "Record deleted!");
+                            location.reload()
+                        } else {
+                            cust_alert('danger', "Could not delete: " + result.msg);
+                        }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    cust_alert('danger', "Error Thrown: " + thrownError);
+                }
+            });
+        }
+        $(document).ready(function () {
+
+            $("#new-comment-form").submit(function (e) {
+                e.preventDefault();
+                var data = $(this).serializeArray().reduce(function (obj, item) {
+                    obj[item.name] = item.value;
+                    return obj;
+                }, {});
+                $.ajax({
+                    type: "POST",
+                    url: "/post/comment/create/",
+                    data: $(this).serialize(),
+                    success: function (result) {
+                        console.log(result);
+                        if (result.code === 1) {
+                            cust_alert('success', "Comment Added!");
+                            $("#new-comment-form").trigger("reset");
+                            $("#new-comment-modal").modal("hide");
+                            location.reload();
+                        } else {
+                            cust_alert('danger', "Could not add: " + result.msg);
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        cust_alert('danger', "Error Thrown: " + thrownError);
+                    }
+                });
+            });
+            $("#edit-comment-form").submit(function (e) {
+                e.preventDefault();
+                var data = $(this).serializeArray().reduce(function (obj, item) {
+                    obj[item.name] = item.value;
+                    return obj;
+                }, {});
+
+                $.ajax({
+                    type: "PUT",
+                    url: "/post/comment/" + data["edit_comment_id"]+"/update/",
+                    data: $(this).serialize(),
+                    success: function (result) {
+                        console.log(result);
+                        if (result.code === 1) {
+                            cust_alert('success', "Record Updated!");
+                            $("#edit-comment-form").trigger("reset");
+                            $("#edit-comment-modal").modal("hide");
+                            location.reload();
+                        } else {
+                            cust_alert('danger', "Could not add: " + result.msg);
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        cust_alert('danger', "Error Thrown: " + thrownError);
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}
