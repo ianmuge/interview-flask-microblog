@@ -19,11 +19,11 @@ class BlogTests(unittest.TestCase):
         seed()
         self.assertEqual(app.debug, False)
 
-    def tearDown(self):
-        db.session.flush()
-        db.drop_all()
-        if os.path.exists(TEST_DB):
-            os.remove(TEST_DB)
+#     def tearDown(self):
+#         db.session.flush()
+#         db.drop_all()
+#         if os.path.exists(TEST_DB):
+#             os.remove(TEST_DB)
 
     def login(self, email, password):
         return self.app.post(
